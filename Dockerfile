@@ -1,19 +1,15 @@
-FROM microsoft/dotnet:2.0-sdk AS build
+FROM php:7.2-cli
+
+RUN mkdir -p app
 WORKDIR /app
+COPY . /app
 
-# Copy everything else and build
-COPY . ./
-RUN dotnet restore
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN apt-get update
+RUN apt-get install -y git
 
-# Build the specific project and output it into /app/out for KintoHub to process
-WORKDIR /app/{Enter-Project-Folder}
-RUN dotnet publish -c Release -o ../out
-
-# Runtime image
-FROM microsoft/dotnet:2.0-runtime
-WORKDIR /app
-COPY --from=build /app/out .
+RUN composer install --no-interaction
 
 EXPOSE 80
 
-ENTRYPOINT ["dotnet", "{Enter-Project-Output}.dll"]
+ENTRYPOINT ["php", "-S", "0.0.0.0:80"]
